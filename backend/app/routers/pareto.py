@@ -1,16 +1,24 @@
-from typing import List
+from typing import List, Optional
+from fastapi import APIRouter, Query
 from backend.app.schemas.quality_schemas import DefeitoResumo, ParetoItem
 from backend.app.services.analytics_service import AnalyticsService
-from fastapi import APIRouter
 
 router = APIRouter(prefix="/api", tags=["Pareto & Defeitos"])
 
 
 @router.get("/pareto", response_model=List[ParetoItem])
-def obter_pareto():
-    return AnalyticsService.get_pareto_defeitos()
+def obter_pareto(
+    familia_motor: Optional[str] = Query(None, description="Filtrar por família (ex: W12, W22)"),
+    turno: Optional[str] = Query(None, description="Filtrar por turno (ex: Turno 1, Turno 2, Turno 3)"),
+    linha_montagem: Optional[str] = Query(None, description="Filtrar por linha de montagem"),
+):
+    return AnalyticsService.get_pareto_defeitos(familia_motor, turno, linha_montagem)
 
 
 @router.get("/defeitos", response_model=List[DefeitoResumo])
-def obter_resumo_defeitos():
-    return AnalyticsService.get_resumo_defeitos()
+def obter_resumo_defeitos(
+    familia_motor: Optional[str] = Query(None, description="Filtrar por família (ex: W12, W22)"),
+    turno: Optional[str] = Query(None, description="Filtrar por turno"),
+    linha_montagem: Optional[str] = Query(None, description="Filtrar por linha de montagem"),
+):
+    return AnalyticsService.get_resumo_defeitos(familia_motor, turno, linha_montagem)
