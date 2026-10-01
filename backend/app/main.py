@@ -3,6 +3,7 @@ from backend.app.routers import causes, pareto, scrap
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 app = FastAPI(
     title=API_TITLE,
@@ -12,8 +13,13 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=[
+        "http://localhost:3000", "http://127.0.0.1:3000",
+        "http://localhost:5173", "http://127.0.0.1:5173",
+        "http://localhost:5500", "http://127.0.0.1:5500",
+        "http://localhost:8000", "http://127.0.0.1:8000",
+    ],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -29,7 +35,14 @@ def health_check():
     return {"status": "ok", "service": API_TITLE, "engine": "DuckDB + Parquet"}
 
 
-# Servir arquivos estáticos do frontend (se a pasta existir)
-frontend_dir = BASE_DIR / "frontend"
+# O HTML atual está em frontend/html e ainda não existe um index.html na raiz.
+frontend_dir = BASE_DIR / "frontend" / "html"
+
+
+@app.get("/", include_in_schema=False)
+def dashboard():
+    return FileResponse(frontend_dir / "code.html")
+
+
 if frontend_dir.exists():
-    app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+    app.mount("/static", StaticFiles(directory=str(frontend_dir)), name="frontend")

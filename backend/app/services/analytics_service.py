@@ -10,6 +10,9 @@ class AnalyticsService:
         familia_motor: Optional[str] = None,
         turno: Optional[str] = None,
         linha_montagem: Optional[str] = None,
+        lote: Optional[str] = None,
+        data_inicio: Optional[str] = None,
+        data_fim: Optional[str] = None,
     ) -> Tuple[str, List[Any]]:
         conditions = list(base_conditions)
         params: List[Any] = []
@@ -24,6 +27,15 @@ class AnalyticsService:
             conditions.append("linha_montagem = ?")
             params.append(linha_montagem)
 
+        if lote:
+            conditions.append("lote = ?")
+            params.append(lote)
+        if data_inicio:
+            conditions.append("timestamp >= CAST(? AS DATE)")
+            params.append(data_inicio)
+        if data_fim:
+            conditions.append("timestamp < CAST(? AS DATE) + INTERVAL 1 DAY")
+            params.append(data_fim)
         where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
         return where_clause, params
 
@@ -32,6 +44,9 @@ class AnalyticsService:
         familia_motor: Optional[str] = None,
         turno: Optional[str] = None,
         linha_montagem: Optional[str] = None,
+        lote: Optional[str] = None,
+        data_inicio: Optional[str] = None,
+        data_fim: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         conn = get_db_connection()
         where_clause, params = AnalyticsService._build_filter(
@@ -42,7 +57,7 @@ class AnalyticsService:
             ],
             familia_motor,
             turno,
-            linha_montagem,
+            linha_montagem, lote, data_inicio, data_fim,
         )
 
         query = f"""
@@ -85,13 +100,16 @@ class AnalyticsService:
         familia_motor: Optional[str] = None,
         turno: Optional[str] = None,
         linha_montagem: Optional[str] = None,
+        lote: Optional[str] = None,
+        data_inicio: Optional[str] = None,
+        data_fim: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         conn = get_db_connection()
         where_clause, params = AnalyticsService._build_filter(
             ["status_inspecao = 'REFUGO'"],
             familia_motor,
             turno,
-            linha_montagem,
+            linha_montagem, lote, data_inicio, data_fim,
         )
 
         query = f"""
@@ -114,18 +132,22 @@ class AnalyticsService:
         familia_motor: Optional[str] = None,
         turno: Optional[str] = None,
         linha_montagem: Optional[str] = None,
+        lote: Optional[str] = None,
+        data_inicio: Optional[str] = None,
+        data_fim: Optional[str] = None,
     ) -> Dict[str, Any]:
         conn = get_db_connection()
         where_clause, params = AnalyticsService._build_filter(
             [],
             familia_motor,
             turno,
-            linha_montagem,
+            linha_montagem, lote, data_inicio, data_fim,
         )
 
         query = f"""
             SELECT 
                 COUNT(*) AS total_produzido,
+                COUNT(*) AS total_inspecionado,
                 COUNT(CASE WHEN status_inspecao = 'APROVADO' THEN 1 END) AS total_aprovado,
                 COUNT(CASE WHEN status_inspecao = 'REFUGO' THEN 1 END) AS total_refugo,
                 COUNT(CASE WHEN status_inspecao = 'RETRABALHO' THEN 1 END) AS total_retrabalho,
@@ -144,6 +166,7 @@ class AnalyticsService:
             if result
             else {
                 "total_produzido": 0,
+                "total_inspecionado": 0,
                 "total_aprovado": 0,
                 "total_refugo": 0,
                 "total_retrabalho": 0,
@@ -157,13 +180,16 @@ class AnalyticsService:
         familia_motor: Optional[str] = None,
         turno: Optional[str] = None,
         linha_montagem: Optional[str] = None,
+        lote: Optional[str] = None,
+        data_inicio: Optional[str] = None,
+        data_fim: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         conn = get_db_connection()
         where_clause, params = AnalyticsService._build_filter(
             [],
             familia_motor,
             turno,
-            linha_montagem,
+            linha_montagem, lote, data_inicio, data_fim,
         )
 
         query = f"""
@@ -190,6 +216,9 @@ class AnalyticsService:
         familia_motor: Optional[str] = None,
         turno: Optional[str] = None,
         linha_montagem: Optional[str] = None,
+        lote: Optional[str] = None,
+        data_inicio: Optional[str] = None,
+        data_fim: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         conn = get_db_connection()
         where_clause, params = AnalyticsService._build_filter(
@@ -200,7 +229,7 @@ class AnalyticsService:
             ],
             familia_motor,
             turno,
-            linha_montagem,
+            linha_montagem, lote, data_inicio, data_fim,
         )
 
         query = f"""
@@ -230,6 +259,9 @@ class AnalyticsService:
         familia_motor: Optional[str] = None,
         turno: Optional[str] = None,
         linha_montagem: Optional[str] = None,
+        lote: Optional[str] = None,
+        data_inicio: Optional[str] = None,
+        data_fim: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         conn = get_db_connection()
         where_clause, params = AnalyticsService._build_filter(
@@ -240,7 +272,7 @@ class AnalyticsService:
             ],
             familia_motor,
             turno,
-            linha_montagem,
+            linha_montagem, lote, data_inicio, data_fim,
         )
 
         query = f"""

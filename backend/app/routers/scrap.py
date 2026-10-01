@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List, Optional
 from fastapi import APIRouter, Query
 from backend.app.schemas.quality_schemas import ScrapKPIs, ScrapPorLote
@@ -11,8 +12,11 @@ def obter_kpis_scrap(
     familia_motor: Optional[str] = Query(None, description="Filtrar por família (ex: W12, W22)"),
     turno: Optional[str] = Query(None, description="Filtrar por turno"),
     linha_montagem: Optional[str] = Query(None, description="Filtrar por linha de montagem"),
+    lote: Optional[str] = Query(None, description="Filtrar por lote"),
+    data_inicio: Optional[date] = Query(None, description="Data inicial (YYYY-MM-DD)"),
+    data_fim: Optional[date] = Query(None, description="Data final inclusiva (YYYY-MM-DD)"),
 ):
-    return AnalyticsService.get_scrap_kpis(familia_motor, turno, linha_montagem)
+    return AnalyticsService.get_scrap_kpis(familia_motor, turno, linha_montagem, lote, data_inicio, data_fim)
 
 
 @router.get("/lotes", response_model=List[ScrapPorLote])
@@ -20,5 +24,8 @@ def obter_scrap_por_lotes(
     familia_motor: Optional[str] = Query(None, description="Filtrar por família (ex: W12, W22)"),
     turno: Optional[str] = Query(None, description="Filtrar por turno"),
     linha_montagem: Optional[str] = Query(None, description="Filtrar por linha de montagem"),
+    lote: Optional[str] = Query(None, description="Filtrar por lote"),
+    data_inicio: Optional[date] = Query(None, description="Data inicial (YYYY-MM-DD)"),
+    data_fim: Optional[date] = Query(None, description="Data final inclusiva (YYYY-MM-DD)"),
 ):
-    return AnalyticsService.get_scrap_por_lote(familia_motor, turno, linha_montagem)
+    return AnalyticsService.get_scrap_por_lote(familia_motor, turno, linha_montagem, lote, data_inicio, data_fim)

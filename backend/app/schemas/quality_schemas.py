@@ -21,6 +21,7 @@ class DefeitoResumo(BaseModel):
 # 2. Refugo (Scrap) e Lotes
 class ScrapKPIs(BaseModel):
     total_produzido: int
+    total_inspecionado: int = 0
     total_aprovado: int
     total_refugo: int
     total_retrabalho: int
