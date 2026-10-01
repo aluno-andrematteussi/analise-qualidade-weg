@@ -1,0 +1,18 @@
+# Ambientes virtuais
+venv/
+.venv/
+env/
+
+# Caches do Python
+__pycache__/
+*.py[cod]
+
+# Dados brutos e processados (mantém apenas as pastas via .gitkeep)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# IDEs e configurações de editor
+.vscode/
+.idea/
