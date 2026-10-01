@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Qualidade — Linha de Montagem de Motores</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <style>
+    /* ==========================================================================
+       RESET E VARIÁVEIS CSS — DESIGN CORPORATIVO INDUSTRIAL
+       Paleta: Azul Principal #2B5BA8, Azul Escuro #1E4280, Fundo #F0F0EB, Bordas #E0E0E0
+       ========================================================================== */
+    :root {
+      --color-primary: #2B5BA8;
+      --color-primary-dark: #1E4280;
+      --color-primary-light: #EBF1FA;
+      --color-bg: #F0F0EB;
+      --color-surface: #FFFFFF;
+      --color-text-main: #1A1A1A;
+      --color-text-secondary: #666666;
+      --color-text-muted: #8C8C8C;
+      --color-border: #E0E0E0;
+      --color-border-focus: #2B5BA8;
+      --color-accent-line: #D9534F; /* Para linha de percentual acumulado no Pareto */
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--color-bg);
+      color: var(--color-text-main);
+      line-height: 1.4;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==========================================================================
+       CABEÇALHO DISCRETO E CORPORATIVO
+       ========================================================================== */
+    .header {
+      background-color: var(--color-primary);
+      color: #FFFFFF;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--color-primary-dark);
+    }
+
+    .header-branding {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      font-weight: 400;
+      color: #D6E4F5;
+      letter-spacing: 0.2px;
+    }
+
+    .header-meta {
+      text-align: right;
+      font-size: 12px;
+      color: #D6E4F5;
+    }
+
+    .header-meta strong {
+      color: #FFFFFF;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    /* ==========================================================================
+       LAYOUT PRINCIPAL
+       ========================================================================== */
+    .main-container {
+      width: 100%;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    /* ==========================================================================
+       BARRA DE FILTROS HORIZONTAL
+       ========================================================================== */
+    .filter-card {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      box-shadow: var(--shadow-subtle);
+    }
+
+    .filter-form {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 14px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 140px;
+      flex: 1 1 140px;
+    }
+
+    .filter-group.periodo-group {
+      min-width: 260px;
+      flex: 1.5 1 260px;
+    }
+
+    .filter-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-select,
+    .filter-input {
+      height: 34px;
+      padding: 0 10px;
+      font-size: 13px;
+      color: var(--color-text-main);
+      background-color: #FFFFFF;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: border-color 0.15s ease;
+      font-family: inherit;
+    }
+
+    .filter-select:focus,
+    .filter-input:focus {
+      border-color: var(--color-border-focus);
+    }
+
+    .date-range-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .date-separator {
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    .filter-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .btn {
+      height: 34px;
+      padding: 0 16px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid transparent;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: #FFFFFF;
+      border-color: var(--color-primary-dark);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--color-primary-dark);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--color-text-secondary);
+      border-color: var(--color-border);
+    }
+
+    .btn-secondary:hover {
+      background-color: #FAFAFA;
+      color: var(--color-text-main);
+      border-color: #BDBDBD;
+    }
+
+    /* ==========================================================================
+       INDICADORES PRINCIPAIS (KPIS)
+       ========================================================================== */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      box-shadow: var(--shadow-subtle);
+      border-top: 3px solid var(--color-primary);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .kpi-card.kpi-scrap {
+      border-top-color: #C0392B; /* Destaque sutil para scrap/refugo */
+    }
+
+    .kpi-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 6px;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--color-text-main);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      margin-bottom: 4px;
+      font-feature-settings: "tnum";
+    }
+
+    .kpi-desc {
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    /* ==========================================================================
+       SEÇÃO DOS GRÁFICOS
+       ========================================================================== */
+    .charts-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .chart-card {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      box-shadow: var(--shadow-subtle);
+      position: relative;
+    }
+
+    .chart-header {
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid #F0F0EB;
+      padding-bottom: 8px;
+    }
+
+    .chart-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .chart-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text-main);
+      letter-spacing: 0.2px;
+    }
+
+    .chart-subtitle {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+    }
+
+    .chart-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-primary);
+      background-color: var(--color-primary-light);
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .pareto-wrapper {
+      height: 340px;
+    }
+
+    .secondary-charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .secondary-wrapper {
+      height: 280px;
+    }
+
+    /* ==========================================================================
+       ESTADOS DA INTERFACE (LOADING, VAZIO, ERRO)
+       ========================================================================== */
+    .state-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.92);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      border-radius: var(--radius-md);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .state-overlay.active {
+      display: flex;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .state-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+    }
+
+    .state-text.error {
+      color: #C0392B;
+    }
+
+    /* ==========================================================================
+       RODAPÉ TÉCNICO DISCRETO
+       ========================================================================== */
+    .footer {
+      padding: 10px 24px;
+      font-size: 11px;
+      color: var(--color-text-muted);
+      border-top: 1px solid var(--color-border);
+      background-color: var(--color-surface);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ==========================================================================
+       RESPONSIVIDADE (BREAKPOINTS >1200px, 768-1199px, <768px)
+       ========================================================================== */
+    @media (max-width: 1199px) {
+      .secondary-charts-grid {
+        grid-template-columns: 1fr;
+      }
+      .secondary-wrapper {
+        height: 260px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .main-container {
+        padding: 12px;
+      }
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .header-meta {
+        text-align: left;
+      }
+      .filter-form {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .filter-group, .filter-group.periodo-group {
+        min-width: 100%;
+        flex: 1 1 100%;
+      }
+      .filter-actions {
+        margin-left: 0;
+        margin-top: 6px;
+      }
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .pareto-wrapper {
+        height: 280px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       1. CABEÇALHO HORIZONTAL DISCRETO
+       ========================================================================== -->
+  <header class="header">
+    <div class="header-branding">
+      <div class="header-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        DASHBOARD DE QUALIDADE
+      </div>
+      <div class="header-subtitle">Linha de Montagem de Motores Industriais (W12 / W22)</div>
+    </div>
+    <div class="header-meta">
+      Última atualização: <strong id="clock-display">--:--:--</strong>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       CONTEÚDO PRINCIPAL
+       ========================================================================== -->
+  <main class="main-container">
+
+    <!-- ==========================================================================
+         2. ÁREA HORIZONTAL DE FILTROS
+         ========================================================================== -->
+    <section class="filter-card">
+      <form id="filter-form" class="filter-form">
+        <!-- Filtro: Modelo -->
+        <div class="filter-group">
+          <label for="filter-modelo" class="filter-label">Modelo</label>
+          <select id="filter-modelo" class="filter-select">
+            <option value="todos">Todos</option>
+            <option value="W12">W12</option>
+            <option value="W22">W22</option>
+          </select>
+        </div>
+
+        <!-- Filtro: Turno -->
+        <div class="filter-group">
+          <label for="filter-turno" class="filter-label">Turno</label>
+          <select id="filter-turno" class="filter-select">
+            <option value="todos">Todos</option>
+            <option value="1">1º Turno</option>
+            <option value="2">2º Turno</option>
+            <option value="3">3º Turno</option>
+          </select>
+        </div>
+
+        <!-- Filtro: Lote -->
+        <div class="filter-group">
+          <label for="filter-lote" class="filter-label">Lote</label>
+          <select id="filter-lote" class="filter-select">
+            <option value="todos">Todos</option>
+            <option value="L-401">L-401</option>
+            <option value="L-402">L-402</option>
+            <option value="L-403">L-403</option>
+            <option value="L-404">L-404</option>
+            <option value="L-405">L-405</option>
+            <option value="L-406">L-406</option>
+          </select>
+        </div>
+
+        <!-- Filtro: Período -->
+        <div class="filter-group periodo-group">
+          <label class="filter-label">Período</label>
+          <div class="date-range-container">
+            <input type="date" id="filter-data-inicio" class="filter-input" value="2024-09-01">
+            <span class="date-separator">→</span>
+            <input type="date" id="filter-data-fim" class="filter-input" value="2024-09-30">
+          </div>
+        </div>
+
+        <!-- Ações: Filtrar e Limpar -->
+        <div class="filter-actions">
+          <button type="button" id="btn-limpar" class="btn btn-secondary">Limpar</button>
+          <button type="submit" id="btn-filtrar" class="btn btn-primary">Filtrar</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ==========================================================================
+         3. INDICADORES PRINCIPAIS (KPIS)
+         ========================================================================== -->
+    <section class="kpi-grid" aria-label="Indicadores de Qualidade">
+      <!-- Indicador 1: Produzidos -->
+      <article class="kpi-card">
+        <h2 class="kpi-title">Produzidos</h2>
+        <div class="kpi-value" id="kpi-produzidos">8.450</div>
+        <p class="kpi-desc">Peças produzidas</p>
+      </article>
+
+      <!-- Indicador 2: Inspecionados -->
+      <article class="kpi-card">
+        <h2 class="kpi-title">Inspecionados</h2>
+        <div class="kpi-value" id="kpi-inspecionados">1.690</div>
+        <p class="kpi-desc">Peças inspecionadas (20%)</p>
+      </article>
+
+      <!-- Indicador 3: Defeituosos -->
+      <article class="kpi-card">
+        <h2 class="kpi-title">Defeituosos</h2>
+        <div class="kpi-value" id="kpi-defeituosos">142</div>
+        <p class="kpi-desc">Peças com defeito (8,4%)</p>
+      </article>
+
+      <!-- Indicador 4: Scrap -->
+      <article class="kpi-card kpi-scrap">
+        <h2 class="kpi-title">Scrap</h2>
+        <div class="kpi-value" id="kpi-scrap">37</div>
+        <p class="kpi-desc">Peças destinadas ao refugo</p>
+      </article>
+    </section>
+
+    <!-- ==========================================================================
+         4. GRÁFICOS: PARETO, SCRAP POR LOTE, CAUSAS POR TURNO
+         ========================================================================== -->
+    <section class="charts-container">
+      
+      <!-- Pareto dos Defeitos (Largura Total) -->
+      <article class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title-group">
+            <h3 class="chart-title">Pareto dos Defeitos</h3>
+            <span class="chart-subtitle">Quantidade de peças defeituosas por tipo de defeito e percentual acumulado</span>
+          </div>
+          <span class="chart-badge">Prioridade 80/20</span>
+        </div>
+        <div class="chart-wrapper pareto-wrapper">
+          <canvas id="paretoChart"></canvas>
+          <div id="pareto-overlay" class="state-overlay">
+            <div class="spinner"></div>
+            <div class="state-text">Carregando dados...</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Gráficos Secundários (2 Colunas em Desktop) -->
+      <div class="secondary-charts-grid">
+        
+        <!-- Evolução do Scrap por Lote -->
+        <article class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <h3 class="chart-title">Evolução do Scrap por Lote</h3>
+              <span class="chart-subtitle">Quantidade de peças destinadas ao refugo</span>
+            </div>
+            <span class="chart-badge">Série Temporal</span>
+          </div>
+          <div class="chart-wrapper secondary-wrapper">
+            <canvas id="scrapChart"></canvas>
+            <div id="scrap-overlay" class="state-overlay">
+              <div class="spinner"></div>
+              <div class="state-text">Carregando dados...</div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Causas por Turno -->
+        <article class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <h3 class="chart-title">Causas por Turno</h3>
+              <span class="chart-subtitle">Distribuição das causas-raiz por turno de trabalho</span>
+            </div>
+            <span class="chart-badge">Classificação Operacional</span>
+          </div>
+          <div class="chart-wrapper secondary-wrapper">
+            <canvas id="causasTurnoChart"></canvas>
+            <div id="causas-overlay" class="state-overlay">
+              <div class="spinner"></div>
+              <div class="state-text">Carregando dados...</div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================================================
+       RODAPÉ CORPORATIVO TÉCNICO
+       ========================================================================== -->
+  <footer class="footer">
+    <div>Sistema de Controle de Qualidade Industrial • Linha W12 / W22 • Ambiente Acadêmico Simulado</div>
+    <div>API Status: <span id="api-status" style="color: #27ae60; font-weight: 600;">Simulador / Pronto p/ FastAPI</span></div>
+  </footer>
+
+  <!-- ==========================================================================
+       SCRIPTS JAVASCRIPT MODULARES (EMBUTIDOS CONFORME ESPECIFICAÇÃO)
+       1. api.js    -> Comunicação com API FastAPI
+       2. charts.js -> Instâncias e atualizações Chart.js
+       3. app.js    -> Orquestração, filtros e ciclo de vida
+       ========================================================================== -->
+  <script>
+    /* ==========================================================================
+       MÓDULO: api.js
+       Responsável pela abstração e chamada aos endpoints REST (FastAPI).
+       Previsto: /api/defeitos, /api/pareto, /api/scrap/lotes, /api/causas/turnos
+       ========================================================================== */
+    const ApiService = (function() {
+      // Altere esta URL base quando o backend FastAPI estiver em execução
+      const API_BASE_URL = "http://localhost:8000/api";
+      const USE_MOCK_FALLBACK = true; // Permite visualização imediata com dados mockados
+
+      // Dataset mockado acadêmico estruturado conforme especificação
+      const MOCK_DB = {
+        indicadores: {
+          todos: { produzidos: 8450, inspecionados: 1690, defeituosos: 142, scrap: 37 },
+          W12: { produzidos: 4850, inspecionados: 970, defeituosos: 88, scrap: 22 },
+          W22: { produzidos: 3600, inspecionados: 720, defeituosos: 54, scrap: 15 }
+        },
+        pareto: {
+          todos: [
+            { tipo_defeito: "Desvio Dimensional Eixo", quantidade: 58 },
+            { tipo_defeito: "Folga Rolamento", quantidade: 34 },
+            { tipo_defeito: "Isolamento Estator", quantidade: 21 },
+            { tipo_defeito: "Desbalanceamento Rotor", quantidade: 14 },
+            { tipo_defeito: "Torque Fixação Carcaça", quantidade: 9 },
+            { tipo_defeito: "Pintura / Estética", quantidade: 6 }
+          ],
+          W12: [
+            { tipo_defeito: "Desvio Dimensional Eixo", quantidade: 38 },
+            { tipo_defeito: "Folga Rolamento", quantidade: 24 },
+            { tipo_defeito: "Isolamento Estator", quantidade: 12 },
+            { tipo_defeito: "Desbalanceamento Rotor", quantidade: 8 },
+            { tipo_defeito: "Torque Fixação Carcaça", quantidade: 4 },
+            { tipo_defeito: "Pintura / Estética", quantidade: 2 }
+          ],
+          W22: [
+            { tipo_defeito: "Desvio Dimensional Eixo", quantidade: 20 },
+            { tipo_defeito: "Folga Rolamento", quantidade: 10 },
+            { tipo_defeito: "Isolamento Estator", quantidade: 9 },
+            { tipo_defeito: "Desbalanceamento Rotor", quantidade: 6 },
+            { tipo_defeito: "Torque Fixação Carcaça", quantidade: 5 },
+            { tipo_defeito: "Pintura / Estética", quantidade: 4 }
+          ]
+        },
+        scrapLotes: {
+          todos: [
+            { lote: "L-401", scrap: 5 },
+            { lote: "L-402", scrap: 9 },
+            { lote: "L-403", scrap: 4 },
+            { lote: "L-404", scrap: 11 },
+            { lote: "L-405", scrap: 3 },
+            { lote: "L-406", scrap: 5 }
+          ],
+          W12: [
+            { lote: "L-401", scrap: 3 },
+            { lote: "L-402", scrap: 6 },
+            { lote: "L-403", scrap: 2 },
+            { lote: "L-404", scrap: 7 },
+            { lote: "L-405", scrap: 1 },
+            { lote: "L-406", scrap: 3 }
+          ],
+          W22: [
+            { lote: "L-401", scrap: 2 },
+            { lote: "L-402", scrap: 3 },
+            { lote: "L-403", scrap: 2 },
+            { lote: "L-404", scrap: 4 },
+            { lote: "L-405", scrap: 2 },
+            { lote: "L-406", scrap: 2 }
+          ]
+        },
+        causasTurno: {
+          turnos: ["1º Turno", "2º Turno", "3º Turno"],
+          causas: ["Desgaste de Ferramental", "Falha de Fixação/Gabarito", "Variação de Matéria-Prima", "Desajuste Operacional"],
+          series: [
+            { causa: "Desgaste de Ferramental", valores: [16, 22, 11] },
+            { causa: "Falha de Fixação/Gabarito", valores: [9, 14, 8] },
+            { causa: "Variação de Matéria-Prima", valores: [7, 8, 12] },
+            { causa: "Desajuste Operacional", valores: [4, 9, 7] }
+          ]
+        }
+      };
+
+      async function request(endpoint, params = {}) {
+        const url = new URL(`${API_BASE_URL}${endpoint}`);
+        Object.keys(params).forEach(key => {
+          if (params[key] && params[key] !== "todos") {
+            url.searchParams.append(key, params[key]);
+          }
+        });
+
+        try {
+          const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return await response.json();
+        } catch (err) {
+          if (USE_MOCK_FALLBACK) {
+            // Simulação de latência de rede realista de 200ms
+            await new Promise(r => setTimeout(r, 180));
+            return getMockData(endpoint, params);
+          }
+          throw err;
+        }
+      }
+
+      function getMockData(endpoint, params) {
+        const modelo = params.modelo || "todos";
+        if (endpoint === "/indicadores" || endpoint === "/defeitos/resumo") {
+          return MOCK_DB.indicadores[modelo] || MOCK_DB.indicadores.todos;
+        }
+        if (endpoint === "/pareto") {
+          return MOCK_DB.pareto[modelo] || MOCK_DB.pareto.todos;
+        }
+        if (endpoint === "/scrap/lotes") {
+          return MOCK_DB.scrapLotes[modelo] || MOCK_DB.scrapLotes.todos;
+        }
+        if (endpoint === "/causas/turnos") {
+          return MOCK_DB.causasTurno;
+        }
+        return null;
+      }
+
+      return {
+        getIndicadores: (filters) => request("/indicadores", filters),
+        getPareto: (filters) => request("/pareto", filters),
+        getScrapLotes: (filters) => request("/scrap/lotes", filters),
+        getCausasTurno: (filters) => request("/causas/turnos", filters)
+      };
+    })();
+
+    /* ==========================================================================
+       MÓDULO: charts.js
+       Gerenciamento e atualização de instâncias do Chart.js.
+       Evita recriação desnecessária; atualiza dados via .update().
+       ========================================================================== */
+    const ChartsManager = (function() {
+      let paretoChart = null;
+      let scrapChart = null;
+      let causasTurnoChart = null;
+
+      // Configuração padrão de tipografia e cores industriais
+      Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
+      Chart.defaults.color = "#666666";
+
+      // 1. Inicializa Pareto dos Defeitos (Barras + Linha Acumulada)
+      function initPareto(canvasId) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        paretoChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: [],
+            datasets: [
+              {
+                type: 'line',
+                label: '% Acumulado',
+                data: [],
+                borderColor: '#C0392B', // Linha de destaque técnico
+                borderWidth: 2,
+                pointBackgroundColor: '#C0392B',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                yAxisID: 'yPercent',
+                tension: 0.1,
+                order: 1
+              },
+              {
+                type: 'bar',
+                label: 'Qtd. Defeitos',
+                data: [],
+                backgroundColor: '#2B5BA8', // Azul corporativo
+                hoverBackgroundColor: '#1E4280',
+                borderRadius: 3,
+                yAxisID: 'yQty',
+                order: 2,
+                barPercentage: 0.6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false,
+            },
+            plugins: {
+              legend: {
+                position: 'top',
+                align: 'end',
+                labels: {
+                  boxWidth: 12,
+                  boxHeight: 12,
+                  font: { size: 11, weight: 600 }
+                }
+              },
+              tooltip: {
+                backgroundColor: '#1E4280',
+                titleFont: { size: 12, weight: 700 },
+                bodyFont: { size: 12 },
+                padding: 10,
+                callbacks: {
+                  label: function(context) {
+                    if (context.dataset.type === 'line') {
+                      return ` Acumulado: ${context.parsed.y.toFixed(1)}%`;
+                    }
+                    return ` Ocorrências: ${context.parsed.y} un`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: {
+                  font: { size: 11 },
+                  maxRotation: 25,
+                  minRotation: 0
+                }
+              },
+              yQty: {
+                type: 'linear',
+                position: 'left',
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Quantidade de Defeitos',
+                  font: { size: 11, weight: 600 }
+                },
+                grid: {
+                  color: '#EFEFEF'
+                },
+                ticks: { precision: 0 }
+              },
+              yPercent: {
+                type: 'linear',
+                position: 'right',
+                beginAtZero: true,
+                max: 100,
+                title: {
+                  display: true,
+                  text: '% Acumulado',
+                  font: { size: 11, weight: 600 }
+                },
+                grid: {
+                  drawOnChartArea: false // Apenas a grade esquerda desenha na área
+                },
+                ticks: {
+                  callback: (value) => `${value}%`
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // 2. Inicializa Evolução do Scrap por Lote (Linha temporal)
+      function initScrap(canvasId) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        scrapChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: [],
+            datasets: [{
+              label: 'Scrap (unidades)',
+              data: [],
+              borderColor: '#2B5BA8',
+              backgroundColor: 'rgba(43, 91, 168, 0.08)',
+              borderWidth: 2,
+              fill: true,
+              pointBackgroundColor: '#2B5BA8',
+              pointBorderColor: '#FFFFFF',
+              pointBorderWidth: 2,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              tension: 0.2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: '#1E4280',
+                padding: 10,
+                callbacks: {
+                  label: (ctx) => ` Refugo: ${ctx.parsed.y} un`
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                title: {
+                  display: true,
+                  text: 'Lote de Montagem',
+                  font: { size: 11, weight: 600 }
+                }
+              },
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Qtd. Refugo',
+                  font: { size: 11, weight: 600 }
+                },
+                grid: { color: '#EFEFEF' },
+                ticks: { precision: 0 }
+              }
+            }
+          }
+        });
+      }
+
+      // 3. Inicializa Causas por Turno (Barras Agrupadas)
+      function initCausasTurno(canvasId) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        // Paleta tonal industrial harmônica baseada em azul e derivados sóbrios
+        const coresCausas = ['#2B5BA8', '#4A7EC7', '#769FD9', '#A6C2EB'];
+
+        causasTurnoChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: [],
+            datasets: []
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false
+            },
+            plugins: {
+              legend: {
+                position: 'top',
+                align: 'end',
+                labels: {
+                  boxWidth: 10,
+                  boxHeight: 10,
+                  font: { size: 10 }
+                }
+              },
+              tooltip: {
+                backgroundColor: '#1E4280',
+                padding: 10
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                title: {
+                  display: true,
+                  text: 'Turno de Operação',
+                  font: { size: 11, weight: 600 }
+                }
+              },
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Qtd. Ocorrências',
+                  font: { size: 11, weight: 600 }
+                },
+                grid: { color: '#EFEFEF' },
+                ticks: { precision: 0 }
+              }
+            }
+          }
+        });
+      }
+
+      // Atualiza Pareto calculando automaticamente os percentuais acumulados
+      function updateParetoData(items) {
+        if (!paretoChart) return;
+        
+        // Ordenação estritamente decrescente conforme princípio de Pareto
+        const sorted = [...items].sort((a, b) => b.quantidade - a.quantidade);
+        const total = sorted.reduce((sum, item) => sum + item.quantidade, 0);
+
+        const labels = sorted.map(item => item.tipo_defeito);
+        const quantidades = sorted.map(item => item.quantidade);
+
+        let acumulado = 0;
+        const acumulados = sorted.map(item => {
+          acumulado += item.quantidade;
+          return total > 0 ? (acumulado / total) * 100 : 0;
+        });
+
+        paretoChart.data.labels = labels;
+        paretoChart.data.datasets[1].data = quantidades;
+        paretoChart.data.datasets[0].data = acumulados;
+        paretoChart.update();
+      }
+
+      // Atualiza Scrap por Lote
+      function updateScrapData(lotes) {
+        if (!scrapChart) return;
+        scrapChart.data.labels = lotes.map(l => l.lote);
+        scrapChart.data.datasets[0].data = lotes.map(l => l.scrap);
+        scrapChart.update();
+      }
+
+      // Atualiza Causas por Turno
+      function updateCausasTurnoData(data) {
+        if (!causasTurnoChart) return;
+        const cores = ['#2B5BA8', '#4A7EC7', '#729BD6', '#9EBEEB'];
+
+        causasTurnoChart.data.labels = data.turnos;
+        causasTurnoChart.data.datasets = data.series.map((item, index) => ({
+          label: item.causa,
+          data: item.valores,
+          backgroundColor: cores[index % cores.length],
+          borderRadius: 2
+        }));
+        causasTurnoChart.update();
+      }
+
+      return {
+        init: () => {
+          initPareto('paretoChart');
+          initScrap('scrapChart');
+          initCausasTurno('causasTurnoChart');
+        },
+        updatePareto: updateParetoData,
+        updateScrap: updateScrapData,
+        updateCausasTurno: updateCausasTurnoData
+      };
+    })();
+
+    /* ==========================================================================
+       MÓDULO: app.js
+       Inicialização da aplicação, filtros, gerenciamento de estados e chamadas.
+       ========================================================================== */
+    (function() {
+      // Elementos do DOM
+      const dom = {
+        clock: document.getElementById('clock-display'),
+        filterForm: document.getElementById('filter-form'),
+        filterModelo: document.getElementById('filter-modelo'),
+        filterTurno: document.getElementById('filter-turno'),
+        filterLote: document.getElementById('filter-lote'),
+        filterDataInicio: document.getElementById('filter-data-inicio'),
+        filterDataFim: document.getElementById('filter-data-fim'),
+        btnLimpar: document.getElementById('btn-limpar'),
+        
+        // KPIs
+        kpiProduzidos: document.getElementById('kpi-produzidos'),
+        kpiInspecionados: document.getElementById('kpi-inspecionados'),
+        kpiDefeituosos: document.getElementById('kpi-defeituosos'),
+        kpiScrap: document.getElementById('kpi-scrap'),
+
+        // Overlays de estado
+        paretoOverlay: document.getElementById('pareto-overlay'),
+        scrapOverlay: document.getElementById('scrap-overlay'),
+        causasOverlay: document.getElementById('causas-overlay')
+      };
+
+      // Atualização do relógio corporativo
+      function updateClock() {
+        const now = new Date();
+        dom.clock.textContent = now.toLocaleTimeString('pt-BR');
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
+
+      // Formatação numérica brasileira (ex: 8.450)
+      function formatNumber(num) {
+        return new Intl.NumberFormat('pt-BR').format(num);
+      }
+
+      // Controle de estados de carregamento
+      function setLoadingState(isLoading) {
+        const overlays = [dom.paretoOverlay, dom.scrapOverlay, dom.causasOverlay];
+        overlays.forEach(overlay => {
+          if (isLoading) {
+            overlay.classList.add('active');
+          } else {
+            overlay.classList.remove('active');
+          }
+        });
+      }
+
+      // Leitura dos filtros selecionados
+      function getFiltrosAtuais() {
+        return {
+          modelo: dom.filterModelo.value,
+          turno: dom.filterTurno.value,
+          lote: dom.filterLote.value,
+          data_inicio: dom.filterDataInicio.value,
+          data_fim: dom.filterDataFim.value
+        };
+      }
+
+      // Funções específicas conforme solicitado na especificação técnica
+      async function carregarIndicadores(filtros) {
+        try {
+          const data = await ApiService.getIndicadores(filtros);
+          if (data) {
+            dom.kpiProduzidos.textContent = formatNumber(data.produzidos);
+            dom.kpiInspecionados.textContent = formatNumber(data.inspecionados);
+            dom.kpiDefeituosos.textContent = formatNumber(data.defeituosos);
+            dom.kpiScrap.textContent = formatNumber(data.scrap);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar indicadores:", error);
+        }
+      }
+
+      async function carregarPareto(filtros) {
+        try {
+          const data = await ApiService.getPareto(filtros);
+          if (data && data.length > 0) {
+            ChartsManager.updatePareto(data);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar Pareto:", error);
+        }
+      }
+
+      async function carregarScrapPorLote(filtros) {
+        try {
+          const data = await ApiService.getScrapLotes(filtros);
+          if (data && data.length > 0) {
+            ChartsManager.updateScrap(data);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar Scrap por Lote:", error);
+        }
+      }
+
+      async function carregarCausasPorTurno(filtros) {
+        try {
+          const data = await ApiService.getCausasTurno(filtros);
+          if (data) {
+            ChartsManager.updateCausasTurno(data);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar Causas por Turno:", error);
+        }
+      }
+
+      // Função orquestradora acionada na carga inicial e ao filtrar
+      async function aplicarFiltros() {
+        const filtros = getFiltrosAtuais();
+        setLoadingState(true);
+
+        try {
+          // Dispara as consultas em paralelo para máxima eficiência
+          await Promise.all([
+            carregarIndicadores(filtros),
+            carregarPareto(filtros),
+            carregarScrapPorLote(filtros),
+            carregarCausasPorTurno(filtros)
+          ]);
+        } catch (err) {
+          console.error("Falha ao atualizar dashboard:", err);
+        } finally {
+          setLoadingState(false);
+        }
+      }
+
+      // Configuração de eventos
+      dom.filterForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        aplicarFiltros();
+      });
+
+      dom.btnLimpar.addEventListener('click', function() {
+        dom.filterModelo.value = 'todos';
+        dom.filterTurno.value = 'todos';
+        dom.filterLote.value = 'todos';
+        dom.filterDataInicio.value = '2024-09-01';
+        dom.filterDataFim.value = '2024-09-30';
+        aplicarFiltros();
+      });
+
+      // Inicialização imediata ao carregar a página
+      window.addEventListener('DOMContentLoaded', () => {
+        ChartsManager.init();
+        aplicarFiltros();
+      });
+    })();
+  </script>
+</body>
+</html>
